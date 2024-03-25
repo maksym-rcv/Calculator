@@ -1,0 +1,133 @@
+﻿@model CalculatorViewModel
+
+@{
+    ViewData["Title"] = "Kalkulačka";
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Kalkulačka</title>
+    <style>
+        .calculator form input {
+            width: 100%;
+        }
+
+        .calculator-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-gap: 5px;
+            margin-top: 5px;
+        }
+
+        .calculator-buttons button {
+            width: 50px;
+            height: 50px;
+            font-size: 18px;
+            margin: 5px;
+        }
+
+        .calculator {
+            display: inline-block;
+            vertical-align: top;
+        }
+
+        .history {
+            display: inline-block;
+            vertical-align: top;
+            margin-left: 20px;
+        }
+
+        .history ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .history li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Kalkulačka</h1>
+
+    <div class="calculator">
+
+        <form method="post" action="/Calculator/Calculate">
+            <input type="text" id="calculation" name="calculation" placeholder="Enter expression" required />
+            <br />
+            <div class="calculator-buttons">
+                <button type="button" onclick="appendToCalculation('1')">1</button>
+                <button type="button" onclick="appendToCalculation('2')">2</button>
+                <button type="button" onclick="appendToCalculation('3')">3</button>
+                <button type="button" onclick="appendToCalculation('+')">+</button>
+                <button type="button" onclick="appendToCalculation('4')">4</button>
+                <button type="button" onclick="appendToCalculation('5')">5</button>
+                <button type="button" onclick="appendToCalculation('6')">6</button>
+                <button type="button" onclick="appendToCalculation('-')">-</button>
+                <button type="button" onclick="appendToCalculation('7')">7</button>
+                <button type="button" onclick="appendToCalculation('8')">8</button>
+                <button type="button" onclick="appendToCalculation('9')">9</button>
+                <button type="button" onclick="appendToCalculation('*')">*</button>
+                <button type="button" onclick="appendToCalculation('0')">0</button>
+                <button type="button" onclick="appendToCalculation(',')">.</button>
+                <button type="button" onclick="clearCalculation()">C</button>
+                <button type="button" onclick="appendToCalculation('/')">/</button>
+            </div>
+            <br />
+            <input type="button" value="Spočítat" onclick="calculate()" />
+        </form>
+
+    </div>
+
+    <div class="history">
+        <h3>Historie:</h3>
+        <ul id="historyList">
+            @foreach (var operation in Model.OperationHistory)
+            {
+                <li>@operation</li>
+            }
+        </ul>
+    </div>
+
+    <script>
+        function appendToCalculation(value) {
+            document.getElementById('calculation').value += value;
+        }
+
+        function clearCalculation() {
+            document.getElementById('calculation').value = '';
+        }
+
+        function calculate() {
+            var expression = document.getElementById('calculation').value;
+
+            // Send AJAX-request to the server
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/Home/Calculate', true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    if (xhr.status === 200) {
+                        // Getting result of evaluation
+                        var result = JSON.parse(xhr.responseText);
+
+                        // Add operation to history
+                        var historyItem = expression + " = " + result;
+                        var listItem = document.createElement("li");
+                        listItem.textContent = historyItem;
+                        document.getElementById("historyList").appendChild(listItem);
+
+                        clearCalculation();
+                    } else {
+                        console.error('Chyba: ' + xhr.status);
+                    }
+                }
+            };
+            xhr.send(JSON.stringify({ expression: expression }));
+        }
+    </script>
+</body>
+</html>
